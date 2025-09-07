@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>نظام الحسابات اليومية</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            width: 500px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        input,
+        button,
+        select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            background: #007BFF;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 15px;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background: #007BFF;
+            color: #fff;
+        }
+
+        .actions button {
+            width: auto;
+            margin: 2px;
+            padding: 6px 10px;
+        }
+
+        .error {
+            color: red;
+            text-align: center;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- صفحة تسجيل الدخول -->
+        <div id="loginPage">
+            <h2>تسجيل الدخول</h2>
+            <input type="text" id="loginUser" placeholder="الإيميل">
+            <input type="password" id="loginPass" placeholder="كلمة المرور">
+            <button onclick="login()">دخول</button>
+            <p id="loginMsg" class="error"></p>
+        </div>
+
+        <!-- صفحة الحسابات -->
+        <div id="recordsPage" class="hidden">
+            <h2>الحسابات اليومية</h2>
+            <div id="addRecordSection">
+                <input type="text" id="empName" placeholder="اسم الموظف">
+                <input type="date" id="empDate">
+                <input type="text" id="empPhone" placeholder="رقم التليفون">
+                <input type="number" id="empValue" placeholder="القيمة">
+                <button onclick="saveRecord()">حفظ</button>
+            </div>
+            <table id="recordsTable">
+                <thead>
+                    <tr>
+                        <th>اسم الموظف</th>
+                        <th>التاريخ</th>
+                        <th>التليفون</th>
+                        <th>القيمة</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <button onclick="logout()">تسجيل خروج</button>
+        </div>
+
+        <!-- صفحة الإدارة (للأدمن والمدير فقط) -->
+        <div id="adminPage" class="hidden">
+            <h2>إدارة المستخدمين</h2>
+            <input type="text" id="newUser" placeholder="إيميل المستخدم الجديد">
+            <input type="password" id="newPass" placeholder="كلمة المرور">
+            <select id="newRole">
+                <option value="employee">موظف</option>
+                <option value="manager">مدير</option>
+            </select>
+            <button onclick="addUser()">إضافة مستخدم</button>
+            <p id="userMsg" class="error"></p>
+            <table id="usersTable">
+                <thead>
+                    <tr>
+                        <th>المستخدم</th>
+                        <th>الدور</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // الأدمن الأساسي
+        let users = [
+            { username: "ahmedeid@m7faza.com", password: "a1234", role: "admin" }
+        ];
+
+        let currentUser = null;
+        let records = [];
+
+        function login() {
+            let u = document.getElementById("loginUser").value.trim();
+            let p = document.getElementById("loginPass").value;
+            let msg = document.getElementById("loginMsg");
+
+            let found = users.find(user => user.username === u && user.password === p);
+            if (found) {
+                currentUser = found;
+                document.getElementById("loginPage").classList.add("hidden");
+                msg.textContent = "";
+                document.getElementById("recordsPage").classList.remove("hidden");
+                renderRecords();
+
+                // لو أدمن أو مدير يظهر له صفحة الإدارة
+                if (found.role === "admin" || found.role === "manager") {
+                    document.getElementById("adminPage").classList.remove("hidden");
+                    renderUsers();
+                }
+            } else {
+                msg.textContent = "بيانات غير صحيحة!";
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById("recordsPage").classList.add("hidden");
+            document.getElementById("adminPage").classList.add("hidden");
+            document.getElementById("loginPage").classList.remove("hidden");
+        }
+
+        function saveRecord() {
+            let name = document.getElementById("empName").value;
+            let date = document.getElementById("empDate").value;
+            let phone = document.getElementById("empPhone").value;
+            let value = document.getElementById("empValue").value;
+
+            if (name && date && phone && value) {
+                records.push({ name, date, phone, value });
+                renderRecords();
+                document.getElementById("empName").value = "";
+                document.getElementById("empDate").value = "";
+                document.getElementById("empPhone").value = "";
+                document.getElementById("empValue").value = "";
+            }
+        }
+
+        function renderRecords() {
+            let tbody = document.querySelector("#recordsTable tbody");
+            tbody.innerHTML = "";
+            records.forEach(r => {
+                let tr = `<tr>
+          <td>${r.name}</td>
+          <td>${r.date}</td>
+          <td>${r.phone}</td>
+          <td>${r.value}</td>
+        </tr>`;
+                tbody.innerHTML += tr;
+            });
+        }
+
+        function addUser() {
+            let u = document.getElementById("newUser").value.trim();
+            let p = document.getElementById("newPass").value;
+            let r = document.getElementById("newRole").value;
+            let msg = document.getElementById("userMsg");
+
+            if (!u.endsWith("@m7faza.com")) {
+                msg.textContent = "الإيميل يجب أن ينتهي بـ @m7faza.com";
+                return;
+            }
+
+            if (u && p) {
+                users.push({ username: u, password: p, role: r });
+                renderUsers();
+                document.getElementById("newUser").value = "";
+                document.getElementById("newPass").value = "";
+                msg.textContent = "";
+            }
+        }
+
+        function deleteUser(index) {
+            users.splice(index, 1);
+            renderUsers();
+        }
+
+        function renderUsers() {
+            let tbody = document.querySelector("#usersTable tbody");
+            tbody.innerHTML = "";
+            users.forEach((user, i) => {
+                if (user.role !== "admin") { // الأدمن الأساسي مش بيتحذف
+                    tbody.innerHTML += `
+            <tr>
+              <td>${user.username}</td>
+              <td>${user.role}</td>
+              <td class="actions">
+                <button onclick="deleteUser(${i})">حذف</button>
+              </td>
+            </tr>`;
+                } else {
+                    tbody.innerHTML += `
+            <tr>
+              <td>${user.username}</td>
+              <td>${user.role}</td>
+              <td>---</td>
+            </tr>`;
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
