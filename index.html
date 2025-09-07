@@ -97,7 +97,6 @@
             <p id="loginMsg" class="error"></p>
         </div>
 
-        <!-- صفحة الحسابات -->
         <div id="recordsPage" class="hidden">
             <h2>الحسابات اليومية</h2>
             <div id="addRecordSection">
@@ -121,7 +120,6 @@
             <button onclick="logout()">تسجيل خروج</button>
         </div>
 
-        <!-- صفحة الإدارة (للأدمن والمدير فقط) -->
         <div id="adminPage" class="hidden">
             <h2>إدارة المستخدمين</h2>
             <input type="text" id="newUser" placeholder="إيميل المستخدم الجديد">
@@ -146,7 +144,6 @@
     </div>
 
     <script>
-        // الأدمن الأساسي
         let users = [
             { username: "ahmedeid@m7faza.com", password: "a1234", role: "admin" }
         ];
@@ -167,7 +164,7 @@
                 document.getElementById("recordsPage").classList.remove("hidden");
                 renderRecords();
 
-                // لو أدمن أو مدير يظهر له صفحة الإدارة
+
                 if (found.role === "admin" || found.role === "manager") {
                     document.getElementById("adminPage").classList.remove("hidden");
                     renderUsers();
